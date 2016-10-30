@@ -13,44 +13,44 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 db.init_app(app)
 
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     return jsonify({'data': 'Hello, World!, This is the Home page'})
 
 
 @app.route('/auth/login', methods=['POST'])
 def auth_login():
-    pass
+    abort(403)
 
 
 @app.route('/auth/register', methods=['POST'])
 def auth_register():
-    pass
+    abort(403)
 
 
-@app.route('/bucketlists/', methods=['POST, GET'])
+@app.route('/bucketlists', methods=['POST, GET'])
 @auth.login_required
 def bucketlists():
-    pass
+    abort(403)
 
 
-@app.route('/bucketlists/<int:id>', methods=['GET, PUT, DELETE'])
+@app.route('/bucketlists/<id>', methods=['GET, PUT, DELETE'])
 @auth.login_required
 def bucketlists_id():
-    pass
+    abort(403)
 
 
-@app.route('/bucketlists/<int:id>/items/', methods=['POST'])
+@app.route('/bucketlists/<id>/items', methods=['POST'])
 @auth.login_required
 def bucketlists_id_items():
-    pass
+    abort(403)
 
 
-@app.route('/bucketlists/<int:id>/items/<int:item_id>',
+@app.route('/bucketlists/<id>/items/<item_id>',
            methods=['PUT, DELETE'])
 @auth.login_required
 def bucketlist_id_items_item_id():
-    pass
+    abort(403)
 
 
 @auth.get_password
