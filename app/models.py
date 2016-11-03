@@ -32,7 +32,7 @@ class Item(Base):
     def get(self):
         return {
             'id': self.id,
-            'name': self.title,
+            'name': self.name,
             'bucketlist_id': self.bucketlist_id,
             'date_created': self.date_created,
             'date_modified': self.date_modified,
@@ -50,7 +50,7 @@ class BucketList(Base):
 
     def get(self):
         return {
-            'id': id,
+            'id': self.id,
             'name': self.name,
             'item': [],
             'date_created': self.date_created,

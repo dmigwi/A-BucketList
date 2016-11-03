@@ -1,4 +1,5 @@
 #!flask/bin/python
+# import config
 from flask import Flask, abort, jsonify, request, make_response, g
 from app.models import Item, db, User
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
@@ -7,9 +8,8 @@ from itsdangerous import TimedJSONWebSignatureSerializer as JWT
 from werkzeug.exceptions import MethodNotAllowed
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SECRET_KEY'] = 'confidential top secret!'
+app.config.from_object('config.DevelopmentConfig')
+
 jwt = JWT(app.config['SECRET_KEY'], expires_in=3600)
 
 db.init_app(app)
@@ -19,40 +19,40 @@ token_auth = HTTPTokenAuth('Bearer')
 multi_auth = MultiAuth(basic_auth, token_auth)
 
 
-@app.route('/', methods=['GET'])
+@app.route('/api/v1/', methods=['GET'])
 def index():
     return jsonify({'data': 'Hello, World!, This is the Home page'})
 
 
-@app.route('/auth/login', methods=['POST'])
+@app.route('/api/v1/auth/login', methods=['POST'])
 def auth_login():
     return make_response(jsonify({}), 401)
 
 
-@app.route('/auth/register', methods=['POST'])
+@app.route('/api/v1/auth/register', methods=['POST'])
 def auth_register():
     return make_response(jsonify({}), 401)
 
 
-@app.route('/bucketlists', methods=['POST', 'GET'])
+@app.route('/api/v1/bucketlists', methods=['POST', 'GET'])
 @multi_auth.login_required
 def bucketlists():
     return make_response(jsonify({}), 401)
 
 
-@app.route('/bucketlists/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/api/v1/bucketlists/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @multi_auth.login_required
 def bucketlists_id(id):
     return make_response(jsonify({}), 401)
 
 
-@app.route('/bucketlists/<int:id>/items', methods=['POST'])
+@app.route('/api/v1/bucketlists/<int:id>/items', methods=['POST'])
 @multi_auth.login_required
 def bucketlists_id_items(id):
     return make_response(jsonify({}), 401)
 
 
-@app.route('/bucketlists/<int:id>/items/<int:item_id>',
+@app.route('/api/v1/bucketlists/<int:id>/items/<int:item_id>',
            methods=['PUT', 'DELETE'])
 @multi_auth.login_required
 def bucketlist_id_items_item_id(id, item_id):
