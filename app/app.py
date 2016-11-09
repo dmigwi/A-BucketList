@@ -227,7 +227,7 @@ def bucketlists_id_items(id):
     else:
         query_new = dict(Message="Resource Created Successfully")
 
-    return return_response(query_new.get(), 201)
+    return return_response(query_new, 201)
 
 
 @app.route('/api/v1/bucketlists/<int:id>/items/<int:item_id>',

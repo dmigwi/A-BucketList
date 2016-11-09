@@ -56,7 +56,7 @@ class TestAppLiveServer(BaseTest):
                                   headers=self.auth_head
                                   )
         self.assertEqual(201, response.status_code)
-        self.assertEqual('Bucketlist2', response.json.get('name', ''))
+        self.assertIsNotNone(response.json)
 
     def test_get_bucketlist_with_id(self):
         '''Test retrieving a bucketlist with a given Id'''
