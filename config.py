@@ -1,5 +1,4 @@
 import os
-import tempfile
 
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -7,10 +6,10 @@ BASEDIR = os.path.abspath(os.path.dirname(__file__))
 class Config(object):
     DEBUG = False
     TESTING = False
-    DATABASE = tempfile.mktemp()
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SECRET_KEY = 'confidential top secret!'
     TRAP_HTTP_EXCEPTIONS = False
+    PRESERVE_CONTEXT_ON_EXCEPTION = False
 
 
 class ProductionConfig(Config):
@@ -18,12 +17,14 @@ class ProductionConfig(Config):
 
 
 class DevelopmentConfig(Config):
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///%sapp.db' % BASEDIR
-    # DEBUG = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///%s/A-BucketList.db' % BASEDIR
+    DEBUG = True
 
 
 class TestingConfig(Config):
-    SECRET_KEY = 'the tests refactoring'
+    # SECRET_KEY = 'the tests refactoring'
     TESTING = True
     DEBUG = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    DATABASE = 'sqlite:///:memory:'
     TRAP_HTTP_EXCEPTIONS = True

@@ -2,38 +2,36 @@ from manage import app as app_test, db
 from app.models import Item, User, BucketList
 from datetime import datetime
 from flask_testing import TestCase
+from werkzeug.security import generate_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as JWT
+import logging as log
 
 
 class BaseTest(TestCase):
 
     def create_app(self):
         app_test.config.from_object('config.TestingConfig')
-        self.jwt = JWT(app_test.config['SECRET_KEY'], expires_in=360)
+        self.jwt = JWT(app_test.config['SECRET_KEY'], expires_in=3600)
 
         self.app_t = app_test
-        db.create_all(app=self.app_t)
         return app_test
 
     def setUp(self):
-        self.json_head = {'Content-Type': 'application/json'}
+        db.create_all(app=self.app_t)
 
+        self.today = datetime.now().strftime('%Y-%m-%d')
         self.http = self.create_app().test_client()
 
-        # To hold contentType and Token headers
-        self.auth_json_head = self.json_head.copy()
-
         # Create and add a user to the db
-        user = User(username='andela-dmigwi', password='migwi123')
-        user.save()
-
-        user = User(username='andela-njirap', password='njirap123')
+        user = User(username='andela-dmigwi',
+                    password=generate_password_hash('migwi123'))
         user.save()
 
         # Add a BucketList to the db
         bucketlist = BucketList(name='December Vacation',
                                 date_created=datetime.now(),
-                                date_modified=datetime.now()
+                                date_modified=datetime.now(),
+                                created_by=1
                                 )
         bucketlist.save()
 
@@ -70,9 +68,25 @@ class BaseTest(TestCase):
         # retrieve a token and assign to the Auth_head
         if token:
             self.auth_head = {'Authorization': 'Bearer %s' % token}
-            self.auth_json_head.update(self.auth_head)
         else:
-            raise Exception('No Token Was Found')
+            log.error('No Token Was Found')
+
+        # Add Other Users
+        user = User(username='andela-njirap',
+                    password=generate_password_hash('njirap123'))
+        user.save()
+
+        user = User(username='andela-kimani',
+                    password=generate_password_hash('kimani123'))
+        user.save()
+
+        # Add a BucketList to the db
+        bucketlist = BucketList(name='Visit Kenya',
+                                date_created=datetime.now(),
+                                date_modified=datetime.now(),
+                                created_by=1
+                                )
+        bucketlist.save()
 
     def tearDown(self):
         db.session.remove()

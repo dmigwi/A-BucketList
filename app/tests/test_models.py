@@ -1,4 +1,5 @@
 from basetest import BaseTest, User, Item, BucketList
+from werkzeug.security import check_password_hash
 
 
 class TestModels(BaseTest):
@@ -17,7 +18,7 @@ class TestModels(BaseTest):
     def test_update(self):
         '''Test if the Update()'''
         users = User.query.filter_by(username='andela-dmigwi').first()
-        self.assertEqual('migwi123', users.password)
+        self.assertTrue(check_password_hash(users.password, 'migwi123'))
 
         users.password = 'this_is_a_test_password'
         users.update()
@@ -42,7 +43,21 @@ class TestModels(BaseTest):
         int_id = user_details.get('id', -1)
         self.assertGreater(int_id, 0)
         self.assertEqual('andela-njirap', user_details.get('username', ''))
-        self.assertEqual('njirap123', user_details.get('password', ''))
+        self.assertTrue(check_password_hash(user_details.get('password', ''),
+                        'njirap123'))
+
+    def test_get_all(self):
+        all_users = User.query.all()
+        formatted_data = User().get_all(all_users)
+
+        self.assertIsNotNone(formatted_data)
+        usernames = []
+        for user in formatted_data:
+            username = user.get('username', '')
+            if username:
+                usernames.append(username)
+        self.assertIn('andela-njirap', usernames)
+        self.assertIn('andela-dmigwi', usernames)
 
     def test_get_bucketlist(self):
         '''Test BucketList.get()'''
@@ -54,8 +69,11 @@ class TestModels(BaseTest):
         self.assertGreater(int_id, 0)
         self.assertEqual('December Vacation',
                          bucketlist_details.get('name', ''))
+        self.assertIn(self.today,
+                      bucketlist_details.get('date_created', ''))
+        self.assertIn(self.today,
+                      bucketlist_details.get('date_modified', ''))
         self.assertIsNotNone(bucketlist_details.get('date_created', ''))
-        self.assertIsNotNone(bucketlist_details.get('date_modified', ''))
 
     def test_get_bucketlist_item(self):
         '''Test Item.get()'''
@@ -67,6 +85,8 @@ class TestModels(BaseTest):
         self.assertGreater(int_id, 0)
         self.assertEqual('Visit Nigeria',
                          item_details.get('name', ''))
-        self.assertIsNotNone(item_details.get('date_created', ''))
-        self.assertIsNotNone(item_details.get('date_modified', ''))
+        self.assertIn(self.today,
+                      item_details.get('date_created', ''))
+        self.assertIn(self.today,
+                      item_details.get('date_modified', ''))
         self.assertFalse(item_details.get('done', True))
