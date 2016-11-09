@@ -108,7 +108,7 @@ def bucketlists():
                                 date_modified=time_now,
                                 created_by=g.user_id)
             b_list.save()
-        new_items = Item.query.filter_by(date_created=time_now).first()
+        new_items = BucketList.query.filter_by(date_created=time_now).first()
         if new_items:
             new_items = new_items.get()
         else:
@@ -116,25 +116,30 @@ def bucketlists():
         return return_response(new_items, 201)
 
     if request.method == 'GET':
-        limit = 20
         count = 0
         time_now = datetime.now()
         return_bucketlists = {}
 
-        if request.args:
-            limit = request.args['limit']
-            limit = 20 if not limit.isdigit() else int(limit)
-            if limit > 100:
-                return return_response(
-                    dict(Error=('Get Failed: Only a maximum of 100 '
-                                'items can be retrieved at ago')), 500)
+        limit = '20' if not request.args else request.args.get('limit', '20')
+        limit = 20 if not limit.isdigit() else int(limit)
+
+        if limit > 100:
+            return return_response(
+                dict(Error=('Get Failed: Only a maximum of 100 '
+                            'items can be retrieved at ago')), 500)
 
         all_bucks = BucketList.query.filter_by(
             created_by=g.user_id).limit(limit).all()
+        print ('q')
+        q = '' if not request.args else request.args.get('q', '')
+        if q:
+            all_bucks = BucketList.query.filter(BucketList.name.contains(q))
+            all_bucks = all_bucks.filter_by(created_by=g.user_id).all()
+
         if not all_bucks:
             return return_response(
-                dict(Error=('Get Failed: You haven\'t '
-                            'created any BucketLists')), 500)
+                dict(Error=('Get Failed: No Bucketlists Found.')), 500)
+
         for bucket_l in all_bucks:
             items = Item.query.filter_by(bucketlist_id=bucket_l.id).all()
             bucketlists = bucket_l.get()
@@ -343,7 +348,13 @@ def get_request_data(request):
     form_d = request.form
     json_d = request.json
 
-    username = form_d['username'] if form_d else json_d['username']
-    password = form_d['password'] if form_d else json_d['password']
+    # Check if not password or username passed
+    if not form_d and not json_d:
+        return ('', '')
+
+    username = (form_d.get('username', '') if form_d
+                else json_d.get('username', ''))
+    password = (form_d.get('password', '') if form_d
+                else json_d.get('password', ''))
 
     return (username, password)
