@@ -5,7 +5,7 @@ from app.models import Item, db, User, BucketList
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as JWT
-import logging as log
+# import logging as log
 
 app = Flask(__name__)
 app.config.from_object('config.DevelopmentConfig')

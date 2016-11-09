@@ -1,0 +1,19 @@
+language: python
+python:
+  - "3.4"
+  - "3.5"
+
+# command to install dependencies
+install: 
+  - pip install -r requirements.txt
+  - pip install coveralls
+# command to run tests
+script:
+ nosetests --with-coverage
+after_success:  
+  - coveralls
+
+# before_install:
+#   - pip install --user codecov
+# after_success:
+#   - codecov --file coverage/lcov.info --disable search
