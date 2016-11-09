@@ -130,7 +130,6 @@ def bucketlists():
 
         all_bucks = BucketList.query.filter_by(
             created_by=g.user_id).limit(limit).all()
-        print ('q')
         q = '' if not request.args else request.args.get('q', '')
         if q:
             all_bucks = BucketList.query.filter(BucketList.name.contains(q))
