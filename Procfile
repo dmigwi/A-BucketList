@@ -1,0 +1,1 @@
+ gunicorn manage:application --log-file -
