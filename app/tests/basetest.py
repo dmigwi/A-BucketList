@@ -1,6 +1,7 @@
 from manage import app as app_test, db
 from app.models import Item, User, BucketList
 from datetime import datetime
+from app.app import generate_a_token
 from flask_testing import TestCase
 from werkzeug.security import generate_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as JWT
@@ -60,16 +61,19 @@ class BaseTest(TestCase):
                       done=False)
         tasks3.save()
 
-        user = {'username': 'andela-dmigwi',
-                            'password': 'migwi123'}
-        token = self.jwt.dumps({'username': user})
-        token = token.decode(encoding="utf-8")
+        query_user = User.query.filter_by(username='andela-dmigwi').first()
+        if query_user:
+            user = {}
+            user['username'] = 'andela-dmigwi'
+            user['id'] = query_user.id
+            token = generate_a_token(user)
 
-        # retrieve a token and assign to the Auth_head
+        # retrieve a token ::: Token should not a contain password
         if token:
             self.auth_head = {'Authorization': 'Bearer %s' % token}
         else:
-            log.error('No Token Was Found')
+            log.error('No Token Was Generated')
+            self.fail()  # stop if a token generation failed
 
         # Add Other Users
         user = User(username='andela-njirap',

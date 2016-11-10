@@ -5,14 +5,13 @@ from app.models import Item, db, User, BucketList
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as JWT
-# import logging as log
+import logging as log
 
 app = Flask(__name__)
 app.config.from_object('config.DevelopmentConfig')
 
 jwt = JWT(app.config['SECRET_KEY'], expires_in=3600)
-ACCEPTED_INPUT_FORMAT = ('Accepted input format is {\'name\''
-                         ': \'Name 1\'}')
+ACCEPTED_INPUT_FORMAT = ('Accepted input format is {\'name\': \'Name 1\'}')
 
 db.init_app(app)
 app.app_context().push()
@@ -70,7 +69,7 @@ def auth_register():
     username, password = get_request_data(request)
     if not username or not password:
         return return_response(dict(
-            Error='Your password or username is empty or wasn\'t found'), 500)
+            Error='Your password or username is empty or wasn\'t found'), 400)
 
     dbs_exist()
     user_found = User.query.filter_by(username=username).first()
@@ -82,7 +81,7 @@ def auth_register():
                          password=pw_hash)
         save_user.save()
         return return_response(dict(Message='Registration Successful'), 201)
-    return return_response(dict(Error='Username already exist'), 500)
+    return return_response(dict(Error='Username already exist'), 400)
 
 
 @app.route('/api/v1/bucketlists', methods=['POST', 'GET'])
@@ -95,7 +94,7 @@ def bucketlists():
         bucklist_name = '' if not ret_value else ret_value.get('name', '')
         if not bucklist_name:
             return return_response(dict(Error='Create Failed: %s'
-                                              '' % ACCEPTED_INPUT_FORMAT), 500)
+                                              '' % ACCEPTED_INPUT_FORMAT), 400)
 
         all_current_bucketlist = BucketList.query.filter_by(
             created_by=g.user_id).all()
@@ -126,7 +125,7 @@ def bucketlists():
         if limit > 100:
             return return_response(
                 dict(Error=('Get Failed: Only a maximum of 100 '
-                            'items can be retrieved at ago')), 500)
+                            'items can be retrieved at ago')), 400)
 
         all_bucks = BucketList.query.filter_by(
             created_by=g.user_id).limit(limit).all()
@@ -151,11 +150,11 @@ def bucketlists():
 @app.route('/api/v1/bucketlists/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @multi_auth.login_required
 def bucketlists_id(id):
+    query = BucketList.query.filter_by(id=id, created_by=g.user_id).first()
     if request.method == 'GET':
-        query = BucketList.query.filter_by(id=id, created_by=g.user_id).first()
         if not query:
             return return_response(dict(
-                Error='Get Failed: Bucketlist Id %s was not found' % id), 500)
+                Error='Get Failed: Bucketlist Id %s was not found' % id), 400)
         query = query.get()
 
         query_items = Item.query.filter_by(bucketlist_id=id).all()
@@ -164,16 +163,15 @@ def bucketlists_id(id):
 
     if request.method == 'PUT':
         time_now = datetime.now()
-        query = BucketList.query.filter_by(id=id, created_by=g.user_id).first()
         if not query:
             return make_response(jsonify(dict(
                 Error='Update Failed: Bucketlist Id %s '
-                'was not found' % id)), 500)
+                'was not found' % id)), 400)
 
         name = request.json.get('name', '')
         if not name:
             return return_response(dict(Error='Create Failed: %s'
-                                              '' % ACCEPTED_INPUT_FORMAT), 500)
+                                              '' % ACCEPTED_INPUT_FORMAT), 400)
         query.name = name
         query.date_modified = time_now
         query.update()
@@ -181,11 +179,10 @@ def bucketlists_id(id):
         return return_response(new_query.get(), 201)
 
     if request.method == 'DELETE':
-        query = BucketList.query.filter_by(id=id, created_by=g.user_id).first()
         if not query:
             return return_response(dict(
                 Error='Delete Failed: Bucketlist Id %s '
-                'was not found' % id), 500)
+                'was not found' % id), 400)
         query.delete()
         # Delete items associated with a given bucketlist
         query_items = Item.query.filter_by(bucketlist_id=id).all()
@@ -202,13 +199,13 @@ def bucketlists_id_items(id):
     n_item_name = '' if not ret_value else ret_value.get('name', '')
     if not n_item_name:
         return return_response(dict(Error='Create Failed: %s'
-                                    '' % ACCEPTED_INPUT_FORMAT), 500)
+                                    '' % ACCEPTED_INPUT_FORMAT), 400)
 
     available_bucketlist = BucketList.query.filter_by(id=id).first()
     time_now = datetime.now()
     if not available_bucketlist:
         return return_response(dict(Error='Create Failed: Bucketlist Id'
-                                    ' %s was not found' % id), 500)
+                                    ' %s was not found' % id), 400)
 
     available_bucketlist.date_modified = time_now
     available_bucketlist.save()
@@ -229,7 +226,7 @@ def bucketlists_id_items(id):
     if query_new:
         query_new = query_new.get()
     else:
-        query_new = dict(Message="Resource Created Successfully")
+        query_new = dict(Message="Resource already exists")
 
     return return_response(query_new, 201)
 
@@ -248,17 +245,17 @@ def bucketlist_id_items_item_id(id, item_id):
         if not query_items or not query_bucketList:
             return return_response(dict(Error='Update Failed: '
                                         'You provided Item Id or BucketList'
-                                        ' Id that is non existent '), 500)
+                                        ' Id that is non existent '), 400)
 
         item_name = request.json.get('name', '')
         item_done = request.json.get('done', False)
 
         # Ensures that only boolean True is passed if not boolean False
-        item_done = True if item_done else False
+        item_done = True if str(item_done).lower() == 'true' else False
 
         if not item_name:
             return return_response(dict(Error='Update Failed: Item Name was'
-                                        ' not found'), 500)
+                                        ' not found'), 400)
 
         query_items.name = item_name
         query_items.date_modified = time_now
@@ -282,7 +279,7 @@ def bucketlist_id_items_item_id(id, item_id):
         if not query_items:
             return return_response(
                 dict(Error='Deleted Failed: You provided Item Id or'
-                           ' BucketList Id that is non existent'), 500)
+                           ' BucketList Id that is non existent'), 400)
         query_items.delete()
         return return_response({}, 204)
 
@@ -304,11 +301,12 @@ def verify_token(token):
     g.user_id = 0
     try:
         data = jwt.loads(token)['username']
+        log.warning(data)
     except:
         return False
     dbs_exist()
     users = User.query.filter_by(username=data.get('username', '')).first()
-    if users:
+    if users.id == data['id']:
         g.user_id = users.id
         return True
     return False
@@ -322,6 +320,15 @@ def generate_a_token(user):
 
 def return_response(message, code):
     return jsonify(message), code
+
+
+def get_bucketlist(id, operation):
+    query = BucketList.query.filter_by(id=id, created_by=g.user_id).first()
+    if not query:
+        return return_response(dict(
+            Error=('%s Failed: Bucketlist Id %s '
+                   'was not found' % (id, operation))), 400)
+    return query
 
 
 def dbs_exist():
