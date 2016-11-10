@@ -13,7 +13,3 @@ script:
 after_success:  
   - coveralls
 
-# before_install:
-#   - pip install --user codecov
-# after_success:
-#   - codecov --file coverage/lcov.info --disable search
