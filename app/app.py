@@ -301,7 +301,6 @@ def verify_token(token):
     g.user_id = 0
     try:
         data = jwt.loads(token)['username']
-        log.warning(data)
     except:
         return False
     dbs_exist()
