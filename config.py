@@ -22,7 +22,6 @@ class DevelopmentConfig(Config):
 
 
 class TestingConfig(Config):
-    # SECRET_KEY = 'the tests refactoring'
     TESTING = True
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
