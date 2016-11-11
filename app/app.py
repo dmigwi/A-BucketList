@@ -69,10 +69,6 @@ def auth_register():
         return return_response(dict(
             Error='Your password or username is empty or wasn\'t found'), 400)
 
-    db_ret = dbs_exist()
-    if db_ret is not True:
-        return return_response(db_ret, 500)
-
     user_found = User.query.filter_by(username=username).first()
     if not user_found:
         pw_hash = generate_password_hash(password=password)
