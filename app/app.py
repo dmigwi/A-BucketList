@@ -5,7 +5,7 @@ from app.models import Item, db, User, BucketList
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as JWT
-import logging as log
+# import logging as log
 
 app = Flask(__name__)
 app.config.from_object('config.DevelopmentConfig')
@@ -49,8 +49,6 @@ def index():
 @app.route('/api/v1/auth/login', methods=['POST'])
 def auth_login():
     username, password = get_request_data(request)
-
-    dbs_exist()
     user_found = User.query.filter_by(username=username).first()
     if not user_found:
         return return_response(dict(
@@ -71,7 +69,10 @@ def auth_register():
         return return_response(dict(
             Error='Your password or username is empty or wasn\'t found'), 400)
 
-    dbs_exist()
+    db_ret = dbs_exist()
+    if db_ret is not True:
+        return return_response(db_ret, 500)
+
     user_found = User.query.filter_by(username=username).first()
     if not user_found:
         pw_hash = generate_password_hash(password=password)
@@ -286,7 +287,6 @@ def bucketlist_id_items_item_id(id, item_id):
 
 @basic_auth.verify_password
 def verify_password(username, password):
-    dbs_exist()
     user_details = User.query.filter_by(username=username).first()
     g.user_id = 0
     if user_details and check_password_hash(
@@ -303,7 +303,6 @@ def verify_token(token):
         data = jwt.loads(token)['username']
     except:
         return False
-    dbs_exist()
     users = User.query.filter_by(username=data.get('username', '')).first()
     if users.id == data['id']:
         g.user_id = users.id
@@ -330,6 +329,7 @@ def get_bucketlist(id, operation):
     return query
 
 
+@app.before_request
 def dbs_exist():
     '''Method provides a help text if the tables don\'t exist'''
     help_text = {
@@ -345,8 +345,7 @@ def dbs_exist():
     items_table = engine.dialect.has_table(engine, 'items')
 
     if user_table and bucketlist_table and items_table:
-        return True
-    return_response(help_text, 500)
+        return return_response(help_text, 500)
 
 
 def get_request_data(request):
