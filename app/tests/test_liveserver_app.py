@@ -23,7 +23,6 @@ class TestAppLiveServer(BaseTest):
                                   content_type='application/json',
                                   data=json.dumps(register)
                                   )
-
         self.assertEqual(201, response.status_code)
         self.assertEqual(dict(Message='Registration Successful'),
                          response.json)

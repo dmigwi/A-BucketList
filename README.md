@@ -22,6 +22,32 @@ Items to be put in a bucket are items that will need to be done by the owner in 
 | Update a bucket list item | PUT | `/api/v1/bucketlists/int:id/items/int:id` |
 | Delete a bucket list item | DELETE | `/api/v1/bucketlists/int:id/items/int:id` |
 
+### A-BucketList Project Setup
+
+-  **Installation:**
+            1. Create a virtual environment by running the command.
+            ``virtualenv --python=python3 venv-flask``
+
+            2. Activate the virtualenv by running
+            ``source venv-flask/bin/activate``
+
+-  **Clone the repo**
+            ``https://github.com/andela-dmigwi/A-BucketList.git``
+
+- **Database setup**
+Run the following commands:
+           1. ``python manage.py db init``
+           2. ``python manage.py db migrate``
+           3. ``python manage.py db upgrade``
+
+- **Launch the system**
+Run the following commands:
+            1. ``python manage.py runserver``
+
+- **Run Tests**
+Run : 
+            1. tox
+
 *The api's input is mainly a JSON file, apart from the login/registation section where form data can be passed*
 
 ### Register a User
