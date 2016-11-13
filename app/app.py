@@ -84,8 +84,8 @@ def auth_register():
 @app.route('/api/v1/bucketlists', methods=['POST', 'GET'])
 @multi_auth.login_required
 def bucketlists():
+    time_now = datetime.now()
     if request.method == 'POST':
-        time_now = datetime.now()
         ret_value = request.json
 
         bucklist_name = '' if not ret_value else ret_value.get('name', '')
@@ -112,28 +112,33 @@ def bucketlists():
         return return_response(new_items, 201)
 
     if request.method == 'GET':
-        count = 0
-        time_now = datetime.now()
         return_bucketlists = {}
 
         limit = '20' if not request.args else request.args.get('limit', '20')
         limit = 20 if not limit.isdigit() else int(limit)
-
         if limit > 100:
             return return_response(
                 dict(Error=('Get Failed: Only a maximum of 100 '
                             'items can be retrieved at ago')), 400)
 
-        all_bucks = BucketList.query.filter_by(
-            created_by=g.user_id).limit(limit).all()
+        page = '1' if not request.args else request.args.get('page', '1')
+        page = 1 if not page.isdigit() else int(page)  # equal to 1 by default
+
+        # Pagination
+        count = limit * (page - 1)
+        base_query = (BucketList.query.filter_by(created_by=g.user_id).
+                      order_by(BucketList.id))
+        all_bucks = base_query.paginate(page, limit, False).items
+
+        # searching a word in bucketlist names
         q = '' if not request.args else request.args.get('q', '')
         if q:
-            all_bucks = BucketList.query.filter(BucketList.name.contains(q))
-            all_bucks = all_bucks.filter_by(created_by=g.user_id).all()
+            base_query = BucketList.query.filter(BucketList.name.contains(q))
+            all_bucks = base_query.filter_by(created_by=g.user_id).all()
 
         if not all_bucks:
             return return_response(
-                dict(Error=('Get Failed: No Bucketlists Found.')), 500)
+                dict(Error=('Get Failed: No Bucketlists Found.')), 400)
 
         for bucket_l in all_bucks:
             items = Item.query.filter_by(bucketlist_id=bucket_l.id).all()
@@ -210,7 +215,7 @@ def bucketlists_id_items(id):
     query_items = Item.query.all()
     item_names = [item.name for item in query_items]
 
-    # Helps not to save a name already saved or not found
+    # Helps not save a name already saved
     if n_item_name not in item_names:
         item = Item(name=n_item_name)
         item.date_created = time_now
@@ -221,11 +226,8 @@ def bucketlists_id_items(id):
     query_new = Item.query.filter_by(
         date_created=time_now, bucketlist_id=id).first()
     if query_new:
-        query_new = query_new.get()
-    else:
-        query_new = dict(Message="Resource already exists")
-
-    return return_response(query_new, 201)
+        return return_response(query_new.get(), 201)
+    return return_response(dict(Message="Resource already exists"), 201)
 
 
 @app.route('/api/v1/bucketlists/<int:id>/items/<int:item_id>',
@@ -265,10 +267,9 @@ def bucketlist_id_items_item_id(id, item_id):
         query_updated_item = Item.query.filter_by(
             date_modified=time_now, id=query_items.id).first()
         if query_updated_item:
-            query_updated_item = query_updated_item.get()
-        else:
-            query_updated_item = dict(Message="Resource Updated Successfully")
-        return return_response(query_updated_item, 201)
+            return return_response(query_updated_item.get(), 201)
+        return return_response(
+            dict(Message="Resource Updated Successfully"), 201)
 
     if request.method == 'DELETE':
         query_items = Item.query.filter_by(
@@ -329,8 +330,8 @@ def get_bucketlist(id, operation):
 def dbs_exist():
     '''Method provides a help text if the tables don\'t exist'''
     help_text = {
-        'Error': 'Databases not Found',
-        'Recommendation': 'Delete Migrations folder and any db setup',
+        '**Error': 'Databases not Found!!',
+        '**Recommendation': 'Delete Migrations folder first:',
         'Command1': 'Run :\'python manage.py db init\'',
         'Command2': 'Run :\'python manage.py db migrate\'',
         'Command3': 'Run :\'python manage.py db upgrade\''
@@ -340,8 +341,11 @@ def dbs_exist():
     bucketlist_table = engine.dialect.has_table(engine, 'bucketlist')
     items_table = engine.dialect.has_table(engine, 'items')
 
-    if user_table and bucketlist_table and items_table:
-        return return_response(help_text, 500)
+    # This is a server side error because not tables were found
+    if not user_table or not bucketlist_table or not items_table:
+        # during testing do not return the error message
+        if app.config['ENV'] != 'testing':
+            return return_response(help_text, 500)
 
 
 def get_request_data(request):

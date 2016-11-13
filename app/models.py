@@ -10,19 +10,13 @@ def convert_date_to_string(date_time):
     return 'Null'
 
 
-def get_current_time():
-    # Done to avoid circular imports
-    from app.app import datetime
-    return datetime.now()
-
-
 class Base(db.Model):
     '''Base Mapper Class'''
     __abstract__ = True
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    date_created = db.Column(db.DateTime(), default=get_current_time())
-    date_modified = db.Column(db.DateTime(), default=get_current_time(),
-                              onupdate=get_current_time())
+    date_created = db.Column(db.DateTime(), default=db.func.now)
+    date_modified = db.Column(db.DateTime(), default=db.func.now,
+                              onupdate=db.func.now)
 
     def save(self):
         db.session.add(self)
