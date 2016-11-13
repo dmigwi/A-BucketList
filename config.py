@@ -14,11 +14,13 @@ class Config(object):
 
 class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'mysql://user@localhost/foo'
+    ENV = 'prod'
 
 
 class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///%s/A-BucketList.db' % BASEDIR
     DEBUG = True
+    ENV = 'dev'
 
 
 class TestingConfig(Config):
@@ -27,3 +29,4 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     DATABASE = 'sqlite:///:memory:'
     TRAP_HTTP_EXCEPTIONS = True
+    ENV = 'testing'

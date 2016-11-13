@@ -227,7 +227,7 @@ Works the same way as a GET method only that an argument has been added to the u
 Works by providing a limit paramater that specify the number of items that should be retrieved
 
     Request
-    GET http://localhost:5555/bucketlists?limit=20
+    GET http://localhost:5555/bucketlists?limit=20&page=1
 
     Response
     20 bucket list records belonging to the logged in user.

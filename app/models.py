@@ -11,9 +11,7 @@ def convert_date_to_string(date_time):
 
 
 def get_current_time():
-    # Done to avoid circular imports
-    from app.app import datetime
-    return datetime.now()
+    return datetime.datetime.now()
 
 
 class Base(db.Model):
