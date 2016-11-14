@@ -21,6 +21,9 @@ token_auth = HTTPTokenAuth('Bearer')
 multi_auth = MultiAuth(basic_auth, token_auth)
 
 
+# Operations dealing with error handlers
+# ======================================
+
 @app.errorhandler(404)
 def handle_error(error):
     return make_response(jsonify({
@@ -38,6 +41,11 @@ def handle_error(error):
     return make_response(jsonify({
         'Error': ('%s Method used to access the Resource '
                   'is Invalid' % request.method)}), 405)
+
+# ======================================
+# Error handle operations end here.
+# ======================================
+# Routes
 
 
 @app.route('/api/v1/', methods=['GET'])
@@ -86,9 +94,10 @@ def auth_register():
 def bucketlists():
     time_now = datetime.now()
     if request.method == 'POST':
-        ret_value = request.json
+        bucklist_name = None
+        if request.json:
+            bucklist_name = request.json.get('name', '')
 
-        bucklist_name = '' if not ret_value else ret_value.get('name', '')
         if not bucklist_name:
             return return_response(dict(Error='Create Failed: %s'
                                               '' % ACCEPTED_INPUT_FORMAT), 400)
@@ -98,18 +107,18 @@ def bucketlists():
         bucketlist_names = [bucket.name for bucket in all_current_bucketlist]
 
         # check if the name was passed or exists
+        new_items = None
         if bucklist_name not in bucketlist_names:
             b_list = BucketList(name=bucklist_name,
                                 date_created=time_now,
                                 date_modified=time_now,
                                 created_by=g.user_id)
-            b_list.save()
-        new_items = BucketList.query.filter_by(date_created=time_now).first()
+            new_items = b_list.save()
+
         if new_items:
-            new_items = new_items.get()
-        else:
-            new_items = dict(Message="Resource Created Successfully")
-        return return_response(new_items, 201)
+            return return_response(new_items.get(), 201)
+        return return_response(dict(Message="Resource Created Successfully"),
+                               201)
 
     if request.method == 'GET':
         return_bucketlists = {}
@@ -176,8 +185,8 @@ def bucketlists_id(id):
                                               '' % ACCEPTED_INPUT_FORMAT), 400)
         query.name = name
         query.date_modified = time_now
-        query.update()
-        new_query = BucketList.query.filter_by(id=id).first()
+        new_query = query.update()
+        # new_query = BucketList.query.filter_by(id=id).first()
         return return_response(new_query.get(), 201)
 
     if request.method == 'DELETE':
@@ -221,10 +230,8 @@ def bucketlists_id_items(id):
         item.date_created = time_now
         item.date_modified = time_now
         item.bucketlist_id = available_bucketlist.id
-        item.save()
+        query_new = item.save()
 
-    query_new = Item.query.filter_by(
-        date_created=time_now, bucketlist_id=id).first()
     if query_new:
         return return_response(query_new.get(), 201)
     return return_response(dict(Message="Resource already exists"), 201)
@@ -281,6 +288,12 @@ def bucketlist_id_items_item_id(id, item_id):
         query_items.delete()
         return return_response({}, 204)
 
+# ======================================
+# Routes end here
+
+# ======================================
+#  username and password verification
+
 
 @basic_auth.verify_password
 def verify_password(username, password):
@@ -291,6 +304,9 @@ def verify_password(username, password):
         g.user_id = user_details.id
         return True
     return False
+
+# ======================================
+# Token Authentication
 
 
 @token_auth.verify_token
@@ -305,6 +321,9 @@ def verify_token(token):
         g.user_id = users.id
         return True
     return False
+
+# Helper functions
+# ======================================
 
 
 def generate_a_token(user):
@@ -324,6 +343,9 @@ def get_bucketlist(id, operation):
             Error=('%s Failed: Bucketlist Id %s '
                    'was not found' % (id, operation))), 400)
     return query
+
+# Method to check if databases exit and return help message if otherwise
+# ======================================
 
 
 @app.before_request
@@ -346,6 +368,9 @@ def dbs_exist():
         # during testing do not return the error message
         if app.config['ENV'] != 'testing':
             return return_response(help_text, 500)
+
+# Method to help retrieve data from password fields
+# ======================================
 
 
 def get_request_data(request):
