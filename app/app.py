@@ -5,6 +5,7 @@ from app.models import Item, db, User, BucketList
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as JWT
+from app.help import help_text, help_message
 # import logging as log
 
 app = Flask(__name__)
@@ -46,8 +47,13 @@ def handle_error(error):
 # Routes
 
 
-@app.route('/api/v1/', methods=['GET'])
+@app.route('/', methods=['GET'])
 def index():
+    return return_response({'Message': help_message}, 200)
+
+
+@app.route('/api/v1', methods=['GET'])
+def homepage():
     return return_response({'Message': ('Hello, World!,'
                                         ' This is the Home page')}, 200)
 
@@ -346,13 +352,7 @@ def get_bucketlist(id, operation):
 @app.before_request
 def dbs_exist():
     '''Method provides a help text if the tables don\'t exist'''
-    help_text = {
-        '**Error': 'Databases not Found!!',
-        '**Recommendation': 'Delete Migrations folder first:',
-        'Command1': 'Run :\'python manage.py db init\'',
-        'Command2': 'Run :\'python manage.py db migrate\'',
-        'Command3': 'Run :\'python manage.py db upgrade\''
-    }
+    
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     user_table = engine.dialect.has_table(engine, 'user')
     bucketlist_table = engine.dialect.has_table(engine, 'bucketlist')

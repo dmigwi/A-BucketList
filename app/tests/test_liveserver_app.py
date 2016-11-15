@@ -11,7 +11,7 @@ class TestAppLiveServer(BaseTest):
 
     def test_homepage_return(self):
         '''Test retreiving the homePage return type'''
-        response = self.http.get('/api/v1/')
+        response = self.http.get('/api/v1')
         self.assertEqual(dict(Message='Hello, World!, This is the Home page'),
                          response.json)
         self.assertEqual(200, response.status_code)

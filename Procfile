@@ -1,1 +1,1 @@
-web: gunicorn manage:app
+web: source ./build.sh;
