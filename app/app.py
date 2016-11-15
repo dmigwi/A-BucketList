@@ -6,7 +6,6 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as JWT
 from app.help import help_text, help_message
-# import logging as log
 
 app = Flask(__name__)
 app.config.from_object('config.DevelopmentConfig')
@@ -21,10 +20,9 @@ basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth('Bearer')
 multi_auth = MultiAuth(basic_auth, token_auth)
 
+
 # ======================================
 # Operations dealing with error handlers
-
-
 @app.errorhandler(404)
 def handle_error(error):
     return make_response(jsonify({
@@ -49,17 +47,20 @@ def handle_error(error):
 
 @app.route('/', methods=['GET'])
 def index():
+    '''Documentation display'''
     return return_response({'Message': help_message}, 200)
 
 
 @app.route('/api/v1', methods=['GET'])
 def homepage():
+    '''Homepage'''
     return return_response({'Message': ('Hello, World!,'
                                         ' This is the Home page')}, 200)
 
 
 @app.route('/api/v1/auth/login', methods=['POST'])
 def auth_login():
+    '''Route for logging in'''
     username, password = get_request_data(request)
     user_found = User.query.filter_by(username=username).first()
     if not user_found:
@@ -75,6 +76,7 @@ def auth_login():
 
 @app.route('/api/v1/auth/register', methods=['POST'])
 def auth_register():
+    '''Route for registering'''
     time_now = datetime.now()
     username, password = get_request_data(request)
     if not username or not password:
@@ -96,11 +98,12 @@ def auth_register():
 @app.route('/api/v1/bucketlists', methods=['POST', 'GET'])
 @multi_auth.login_required
 def bucketlists():
+    '''Route for bucketlist(POST) and (GET)'''
     time_now = datetime.now()
     if request.method == 'POST':
         bucklist_name = None
         if request.json:
-            bucklist_name = request.json.get('name', '')
+            bucklist_name = request.json.get('name', None)
 
         if not bucklist_name:
             return return_response(dict(Error='Create Failed: %s'
@@ -144,7 +147,7 @@ def bucketlists():
         all_bucks = base_query.paginate(page, limit, False).items
 
         # searching a word in bucketlist names
-        q = '' if not request.args else request.args.get('q', '')
+        q = '' if not request.args else request.args.get('q', None)
         if q:
             base_query = BucketList.query.filter(BucketList.name.contains(q))
             all_bucks = base_query.filter_by(created_by=g.user_id).all()
@@ -183,14 +186,13 @@ def bucketlists_id(id):
                 Error='Update Failed: Bucketlist Id %s '
                 'was not found' % id)), 400)
 
-        name = request.json.get('name', '')
+        name = request.json.get('name', None)
         if not name:
             return return_response(dict(Error='Create Failed: %s'
                                               '' % ACCEPTED_INPUT_FORMAT), 400)
         query.name = name
         query.date_modified = time_now
         new_query = query.update()
-        # new_query = BucketList.query.filter_by(id=id).first()
         return return_response(new_query.get(), 201)
 
     if request.method == 'DELETE':
@@ -199,7 +201,7 @@ def bucketlists_id(id):
                 Error='Delete Failed: Bucketlist Id %s '
                 'was not found' % id), 400)
         query.delete()
-        # Delete items associated with a given bucketlist
+
         query_items = Item.query.filter_by(bucketlist_id=id).all()
         for query_i in query_items:
             query_i.delete()
@@ -211,12 +213,14 @@ def bucketlists_id(id):
 def bucketlists_id_items(id):
     ret_value = request.json
 
-    n_item_name = '' if not ret_value else ret_value.get('name', '')
+    n_item_name = '' if not ret_value else ret_value.get('name', None)
     if not n_item_name:
         return return_response(dict(Error='Create Failed: %s'
                                     '' % ACCEPTED_INPUT_FORMAT), 400)
 
-    available_bucketlist = BucketList.query.filter_by(id=id).first()
+    available_bucketlist = BucketList.query.filter_by(id=id,
+                                                      created_by=g.user_id
+                                                      ).first()
     time_now = datetime.now()
     if not available_bucketlist:
         return return_response(dict(Error='Create Failed: Bucketlist Id'
@@ -245,6 +249,7 @@ def bucketlists_id_items(id):
            methods=['PUT', 'DELETE'])
 @multi_auth.login_required
 def bucketlist_id_items_item_id(id, item_id):
+    # Route for deleting and editing the item
     if request.method == 'PUT':
         time_now = datetime.now()
         query_bucketList = BucketList.query.filter_by(id=id,
@@ -292,10 +297,9 @@ def bucketlist_id_items_item_id(id, item_id):
         query_items.delete()
         return return_response({}, 204)
 
+
 # ======================================
 #  username and password verification
-
-
 @basic_auth.verify_password
 def verify_password(username, password):
     user_details = User.query.filter_by(username=username).first()
@@ -306,10 +310,9 @@ def verify_password(username, password):
         return True
     return False
 
+
 # ======================================
 # Token Authentication
-
-
 @token_auth.verify_token
 def verify_token(token):
     g.user_id = 0
@@ -323,10 +326,9 @@ def verify_token(token):
         return True
     return False
 
+
 # ======================================
 # Helper functions
-
-
 def generate_a_token(user):
     JWT(app.config['SECRET_KEY'], expires_in=3600)
     token = jwt.dumps({'username': user})
@@ -345,14 +347,12 @@ def get_bucketlist(id, operation):
                    'was not found' % (id, operation))), 400)
     return query
 
+
 # ======================================
 # Method to check if databases exit and return help message if otherwise
-
-
 @app.before_request
 def dbs_exist():
     '''Method provides a help text if the tables don\'t exist'''
-    
     engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     user_table = engine.dialect.has_table(engine, 'user')
     bucketlist_table = engine.dialect.has_table(engine, 'bucketlist')
@@ -364,10 +364,9 @@ def dbs_exist():
         if app.config['ENV'] != 'testing':
             return return_response(help_text, 500)
 
+
 # ======================================
 # Method to help retrieve data from password fields
-
-
 def get_request_data(request):
     form_d = request.form
     json_d = request.json
