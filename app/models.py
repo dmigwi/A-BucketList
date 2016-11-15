@@ -10,10 +10,6 @@ def convert_date_to_string(date_time):
     return 'Null'
 
 
-def get_current_time():
-    return datetime.datetime.now()
-
-
 class Base(db.Model):
     '''Base Mapper Class'''
     __abstract__ = True

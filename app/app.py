@@ -20,9 +20,9 @@ basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth('Bearer')
 multi_auth = MultiAuth(basic_auth, token_auth)
 
-
-# Operations dealing with error handlers
 # ======================================
+# Operations dealing with error handlers
+
 
 @app.errorhandler(404)
 def handle_error(error):
@@ -42,8 +42,6 @@ def handle_error(error):
         'Error': ('%s Method used to access the Resource '
                   'is Invalid' % request.method)}), 405)
 
-# ======================================
-# Error handle operations end here.
 # ======================================
 # Routes
 
@@ -289,9 +287,6 @@ def bucketlist_id_items_item_id(id, item_id):
         return return_response({}, 204)
 
 # ======================================
-# Routes end here
-
-# ======================================
 #  username and password verification
 
 
@@ -322,8 +317,8 @@ def verify_token(token):
         return True
     return False
 
-# Helper functions
 # ======================================
+# Helper functions
 
 
 def generate_a_token(user):
@@ -344,8 +339,8 @@ def get_bucketlist(id, operation):
                    'was not found' % (id, operation))), 400)
     return query
 
-# Method to check if databases exit and return help message if otherwise
 # ======================================
+# Method to check if databases exit and return help message if otherwise
 
 
 @app.before_request
@@ -369,8 +364,8 @@ def dbs_exist():
         if app.config['ENV'] != 'testing':
             return return_response(help_text, 500)
 
-# Method to help retrieve data from password fields
 # ======================================
+# Method to help retrieve data from password fields
 
 
 def get_request_data(request):
